@@ -241,10 +241,27 @@ footer{border-top:1px solid var(--border);padding:1.5rem 2rem;text-align:center;
 
 <footer>Made with love for Brent McMinn &amp; family</footer>
 
-<script>
-/* ===== WALL OF ENCOURAGEMENT — shared persistent storage ===== */
+<script type="module">
+/* ===== FIREBASE CONFIG ===== */
+import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import{getDatabase,ref,push,onValue}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+const firebaseConfig={
+  apiKey:"AIzaSyBAhE1SKGn8v8W8vIpHJ7pO4Gb7jIO6HHc",
+  authDomain:"brent-mcminn.firebaseapp.com",
+  databaseURL:"https://brent-mcminn-default-rtdb.firebaseio.com",
+  projectId:"brent-mcminn",
+  storageBucket:"brent-mcminn.firebasestorage.app",
+  messagingSenderId:"516246883608",
+  appId:"1:516246883608:web:9f61d122e7d1bb7a48226d"
+};
+
+const app=initializeApp(firebaseConfig);
+const db=getDatabase(app);
+const messagesRef=ref(db,'wall_messages');
+
+/* ===== WALL OF ENCOURAGEMENT ===== */
 (function(){
-  const STORAGE_KEY='brent_mcminn_wall';
   function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
   function renderMessages(msgs){
@@ -253,38 +270,13 @@ footer{border-top:1px solid var(--border);padding:1.5rem 2rem;text-align:center;
     el.innerHTML='<div class="messages-grid">'+[...msgs].reverse().map(m=>`<div class="msg-card"><div class="msg-from">${esc(m.name||'Anonymous')}</div>${m.location?`<div class="msg-location">${esc(m.location)}</div>`:''}<div class="msg-text">${esc(m.text||'')}</div><div class="msg-date">${esc(m.date||'')}</div></div>`).join('')+'</div>';
   }
 
-  async function loadMessages(){
-    const el=document.getElementById('wall-messages');
-    el.innerHTML='<div class="wall-loading">Loading messages...</div>';
-    try{
-      const result=await window.storage.get(STORAGE_KEY,true);
-      const msgs=result?JSON.parse(result.value):[];
-      renderMessages(msgs);
-    }catch(e){renderMessages([]);}
-  }
-
-  async function postMessage(name,location,text){
-    const statusEl=document.getElementById('msg-status');
-    const btn=document.getElementById('msg-submit');
-    btn.disabled=true;
-    statusEl.className='wall-status';
-    statusEl.textContent='Posting your message...';
-    const newMsg={name,location,text,date:new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})};
-    try{
-      let existing=[];
-      try{const r=await window.storage.get(STORAGE_KEY,true);if(r)existing=JSON.parse(r.value);}catch(e){}
-      const updated=[...existing,newMsg];
-      await window.storage.set(STORAGE_KEY,JSON.stringify(updated),true);
-      renderMessages(updated);
-    }catch(e){renderMessages([newMsg]);}
-    statusEl.textContent='Your message has been posted. Thank you!';
-    statusEl.className='wall-status ok';
-    document.getElementById('msg-name').value='';
-    document.getElementById('msg-location').value='';
-    document.getElementById('msg-text').value='';
-    btn.disabled=false;
-    setTimeout(()=>{statusEl.textContent='';},4000);
-  }
+  document.getElementById('wall-messages').innerHTML='<div class="wall-loading">Loading messages...</div>';
+  onValue(messagesRef,snapshot=>{
+    const data=snapshot.val();
+    if(!data){renderMessages([]);return;}
+    const msgs=Object.values(data);
+    renderMessages(msgs);
+  });
 
   document.getElementById('msg-submit').addEventListener('click',()=>{
     const name=document.getElementById('msg-name').value.trim();
@@ -293,12 +285,29 @@ footer{border-top:1px solid var(--border);padding:1.5rem 2rem;text-align:center;
     const statusEl=document.getElementById('msg-status');
     if(!name){statusEl.textContent='Please enter your name.';statusEl.className='wall-status err';return;}
     if(!text){statusEl.textContent='Please write a message.';statusEl.className='wall-status err';return;}
-    postMessage(name,location,text);
+    const btn=document.getElementById('msg-submit');
+    btn.disabled=true;
+    statusEl.className='wall-status';
+    statusEl.textContent='Posting your message...';
+    const newMsg={name,location,text,date:new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})};
+    push(messagesRef,newMsg).then(()=>{
+      statusEl.textContent='Your message has been posted. Thank you!';
+      statusEl.className='wall-status ok';
+      document.getElementById('msg-name').value='';
+      document.getElementById('msg-location').value='';
+      document.getElementById('msg-text').value='';
+      btn.disabled=false;
+      setTimeout(()=>{statusEl.textContent='';},4000);
+    }).catch(()=>{
+      statusEl.textContent='Something went wrong. Please try again.';
+      statusEl.className='wall-status err';
+      btn.disabled=false;
+    });
   });
-
-  loadMessages();
 })();
+</script>
 
+<script>
 /* ===== DATA ===== */
 const mealDays=[
   {label:"Monday",meals:[
