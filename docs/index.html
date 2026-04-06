@@ -242,12 +242,10 @@ footer{border-top:1px solid var(--border);padding:1.5rem 2rem;text-align:center;
 <footer>Made with love for Brent McMinn &amp; family</footer>
 
 <script>
-/* ===== WALL OF ENCOURAGEMENT ===== */
+/* ===== WALL OF ENCOURAGEMENT — shared persistent storage ===== */
 (function(){
-  const SK='brent_wall_v1';
+  const STORAGE_KEY='brent_mcminn_wall';
   function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-  function getStored(){try{return JSON.parse(localStorage.getItem(SK)||'[]')}catch(e){return[]}}
-  function setStored(msgs){try{localStorage.setItem(SK,JSON.stringify(msgs))}catch(e){}}
 
   function renderMessages(msgs){
     const el=document.getElementById('wall-messages');
@@ -256,9 +254,13 @@ footer{border-top:1px solid var(--border);padding:1.5rem 2rem;text-align:center;
   }
 
   async function loadMessages(){
-    const stored=getStored();
-    if(stored.length){renderMessages(stored);return;}
-    renderMessages([]);
+    const el=document.getElementById('wall-messages');
+    el.innerHTML='<div class="wall-loading">Loading messages...</div>';
+    try{
+      const result=await window.storage.get(STORAGE_KEY,true);
+      const msgs=result?JSON.parse(result.value):[];
+      renderMessages(msgs);
+    }catch(e){renderMessages([]);}
   }
 
   async function postMessage(name,location,text){
@@ -268,10 +270,13 @@ footer{border-top:1px solid var(--border);padding:1.5rem 2rem;text-align:center;
     statusEl.className='wall-status';
     statusEl.textContent='Posting your message...';
     const newMsg={name,location,text,date:new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})};
-    const existing=getStored();
-    const updated=[...existing,newMsg];
-    setStored(updated);
-    renderMessages(updated);
+    try{
+      let existing=[];
+      try{const r=await window.storage.get(STORAGE_KEY,true);if(r)existing=JSON.parse(r.value);}catch(e){}
+      const updated=[...existing,newMsg];
+      await window.storage.set(STORAGE_KEY,JSON.stringify(updated),true);
+      renderMessages(updated);
+    }catch(e){renderMessages([newMsg]);}
     statusEl.textContent='Your message has been posted. Thank you!';
     statusEl.className='wall-status ok';
     document.getElementById('msg-name').value='';
