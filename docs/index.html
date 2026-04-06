@@ -29,6 +29,37 @@ nav{display:flex;gap:5px;flex-wrap:wrap}
 .nav-btn{padding:5px 12px;border-radius:20px;border:1px solid var(--border);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;background:transparent;color:var(--ink-muted);transition:all .15s;text-decoration:none;display:inline-block}
 .nav-btn:hover{background:var(--cream);color:var(--ink)}
 .nav-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+/* RECIPE CARDS */
+.recipe-filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.25rem}
+.recipe-filter-btn{padding:5px 14px;border-radius:20px;border:1px solid var(--border);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;background:transparent;color:var(--ink-muted);transition:all .15s}
+.recipe-filter-btn:hover{background:var(--cream)}
+.recipe-filter-btn.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+.recipe-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.recipe-card{background:var(--warm-white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:border-color .15s}
+.recipe-card:hover{border-color:var(--accent)}
+.recipe-card-head{padding:14px 16px;cursor:pointer}
+.recipe-meal-type{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-faint);margin-bottom:4px}
+.recipe-name{font-family:'Lora',serif;font-size:16px;color:var(--ink);margin-bottom:6px}
+.recipe-meta{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.recipe-meta-item{font-size:11px;color:var(--ink-muted)}
+.recipe-tags{display:flex;gap:5px;flex-wrap:wrap}
+.rtag{font-size:10px;padding:2px 8px;border-radius:20px}
+.rtag-gf{background:var(--ok-bg);color:var(--ok-text)}
+.rtag-df{background:#EEF3FA;color:#2A4F7A}
+.rtag-p{background:var(--mild-bg);color:var(--mild-text)}
+.recipe-toggle-hint{font-size:11px;color:var(--accent);margin-top:6px}
+.recipe-card-body{padding:0 16px 14px;display:none;border-top:1px solid var(--border)}
+.recipe-card-body.open{display:block}
+.recipe-section-label{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint);margin:12px 0 6px}
+.recipe-ingredients{list-style:none;padding:0;margin-bottom:4px}
+.recipe-ingredients li{font-size:13px;padding:4px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:8px}
+.recipe-ingredients li:last-child{border-bottom:none}
+.ing-name{color:var(--ink)}
+.ing-amount{color:var(--ink-faint);font-size:12px;white-space:nowrap}
+.recipe-steps{counter-reset:steps;padding:0;list-style:none}
+.recipe-steps li{font-size:13px;color:var(--ink-muted);padding:6px 0 6px 26px;position:relative;border-bottom:1px solid var(--border);line-height:1.5}
+.recipe-steps li:last-child{border-bottom:none}
+.recipe-steps li::before{counter-increment:steps;content:counter(steps);position:absolute;left:0;top:7px;width:17px;height:17px;background:var(--accent-light);color:var(--accent);border-radius:50%;font-size:10px;font-weight:500;display:flex;align-items:center;justify-content:center}
 .hero{position:relative;width:100%;height:500px;overflow:hidden}
 .hero img{width:100%;height:100%;object-fit:cover;object-position:center 20%;display:block}
 .hero-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(20,18,14,.05) 30%,rgba(20,18,14,.62) 100%)}
@@ -147,6 +178,7 @@ footer{border-top:1px solid var(--border);padding:1.5rem 2rem;text-align:center;
       <a class="nav-btn" href="#encouragement">Wall of Encouragement</a>
       <a class="nav-btn" href="#meal-plan">Meal Plan</a>
       <a class="nav-btn" href="#reference">Food Reference</a>
+      <a class="nav-btn" href="#recipes">Recipes</a>
       <a class="nav-btn" href="#rotation">Rotation Tracker</a>
     </nav>
   </div>
@@ -217,6 +249,21 @@ footer{border-top:1px solid var(--border);padding:1.5rem 2rem;text-align:center;
   </div>
   <div id="rc-chart"></div>
   <div class="note-strip"><strong>Candida protocol:</strong> Also eliminate agave, cane sugar, honey, maple sugar, molasses. &nbsp;|&nbsp; <strong>Gluten/Gliadin:</strong> Eliminate barley, malt, rye, spelt, wheat. &nbsp;|&nbsp; <strong>Casein:</strong> Eliminate cow's, goat's, and sheep's milk.</div>
+</section>
+
+<section id="recipes">
+  <div class="section-header">
+    <div class="section-title">Recipe Cards</div>
+    <div class="section-desc">Step-by-step recipes for every meal in the plan. All gluten-free, dairy-free, and Candida-safe. Click any card to expand.</div>
+  </div>
+  <div class="recipe-filter-bar">
+    <button class="recipe-filter-btn active" data-rf="all">All</button>
+    <button class="recipe-filter-btn" data-rf="Breakfast">Breakfast</button>
+    <button class="recipe-filter-btn" data-rf="Lunch">Lunch</button>
+    <button class="recipe-filter-btn" data-rf="Dinner">Dinner</button>
+    <button class="recipe-filter-btn" data-rf="Snack">Snacks</button>
+  </div>
+  <div class="recipe-grid" id="recipe-grid"></div>
 </section>
 
 <section id="rotation">
@@ -424,7 +471,144 @@ const rotDays=[
   renderRot();
 })();
 
-/* ===== NAV SCROLL ===== */
+/* ===== RECIPES ===== */
+(function(){
+  const recipes=[
+    {day:"Monday",type:"Breakfast",name:"Salmon & avocado rice bowl",time:"20 min",serves:"1",tags:["gf","df","p"],
+     ingredients:[{n:"Brown rice (cooked)",a:"1 cup"},{n:"Salmon fillet",a:"4 oz"},{n:"Avocado",a:"½"},{n:"Cucumber",a:"¼, sliced"},{n:"Sesame oil",a:"1 tsp"},{n:"Lemon juice",a:"1 tsp"},{n:"Sea salt",a:"pinch"}],
+     steps:["Cook brown rice according to package instructions or use pre-cooked.","Season salmon with sea salt. Heat a pan over medium-high heat with a tiny bit of canola oil. Sear salmon 3–4 min per side until cooked through. Flake into chunks.","Slice avocado and cucumber.","Assemble: rice in a bowl, top with salmon, avocado, and cucumber.","Drizzle sesame oil and lemon juice over the top. Serve with green tea."]},
+    {day:"Monday",type:"Lunch",name:"Turkey & sweet potato soup",time:"35 min",serves:"2",tags:["gf","df","p"],
+     ingredients:[{n:"Ground turkey",a:"6 oz"},{n:"Sweet potato",a:"1 medium, diced"},{n:"Collard greens",a:"1 cup, chopped"},{n:"Tomato",a:"1, diced"},{n:"Chicken broth (low sodium)",a:"3 cups"},{n:"Turmeric",a:"½ tsp"},{n:"Canola oil",a:"1 tsp"},{n:"Sea salt",a:"to taste"}],
+     steps:["Heat canola oil in a pot over medium heat. Add ground turkey and cook until browned, breaking it up as it cooks, about 5–6 minutes.","Add diced sweet potato and tomato. Stir and cook 2 minutes.","Pour in chicken broth. Add turmeric and a pinch of sea salt. Bring to a boil.","Reduce heat and simmer 15 minutes until sweet potato is tender.","Stir in collard greens and cook another 3–4 minutes. Taste and adjust salt."]},
+    {day:"Monday",type:"Dinner",name:"Baked halibut with roasted vegetables",time:"30 min",serves:"1",tags:["gf","df","p"],
+     ingredients:[{n:"Halibut fillet",a:"5 oz"},{n:"Butternut squash",a:"1 cup, cubed"},{n:"Mustard greens",a:"1 cup"},{n:"Olive oil",a:"1 tbsp"},{n:"Rosemary (fresh or dried)",a:"1 tsp"},{n:"Lemon",a:"½"},{n:"Sea salt",a:"to taste"}],
+     steps:["Preheat oven to 400°F (200°C).","Toss butternut squash cubes with half the olive oil and a pinch of salt. Spread on a baking sheet and roast 20 minutes, flipping halfway.","Place halibut on a separate baking sheet. Drizzle with remaining olive oil, squeeze lemon over the top, and sprinkle with rosemary and salt.","Bake halibut for 12–15 minutes until it flakes easily with a fork.","While halibut bakes, sauté mustard greens in a pan with a tiny bit of canola oil for 3 minutes until wilted. Serve everything together."]},
+    {day:"Monday",type:"Snack",name:"Almonds & sliced apple",time:"2 min",serves:"1",tags:["gf","df"],
+     ingredients:[{n:"Raw almonds",a:"¼ cup"},{n:"Apple",a:"1 medium"}],
+     steps:["Slice the apple into wedges.","Serve alongside almonds. No cooking needed."]},
+    {day:"Tuesday",type:"Breakfast",name:"Egg scramble with greens",time:"12 min",serves:"1",tags:["gf","df","p"],
+     ingredients:[{n:"Eggs (whole)",a:"2"},{n:"Spinach",a:"1 cup"},{n:"Scallion",a:"1 stalk, sliced"},{n:"Tomato",a:"½, diced"},{n:"Canola oil",a:"1 tsp"},{n:"Sea salt",a:"pinch"},{n:"Strawberries (side)",a:"½ cup"}],
+     steps:["Heat canola oil in a pan over medium heat.","Add scallion and tomato. Cook 1–2 minutes until slightly softened.","Add spinach and stir until just wilted, about 1 minute.","Crack eggs into the pan. Scramble gently with a spatula until just set. Season with sea salt.","Serve immediately with fresh strawberries on the side."]},
+    {day:"Tuesday",type:"Lunch",name:"Shrimp & wild rice salad",time:"20 min",serves:"1",tags:["gf","df","p"],
+     ingredients:[{n:"Shrimp (peeled, cooked)",a:"4 oz"},{n:"Wild rice (cooked)",a:"¾ cup"},{n:"Cucumber",a:"¼, sliced"},{n:"Radish",a:"3, sliced"},{n:"Scallion",a:"1 stalk, sliced"},{n:"Sesame oil",a:"1 tsp"},{n:"Lime juice",a:"1 tbsp"},{n:"Sea salt",a:"pinch"}],
+     steps:["If using raw shrimp, boil in salted water 2–3 minutes until pink. Drain and chill.","Cook wild rice according to package instructions and let cool to room temperature.","Whisk together sesame oil, lime juice, and a pinch of salt to make the dressing.","Combine rice, shrimp, cucumber, radish, and scallion in a bowl.","Drizzle dressing over the top and toss gently. Serve chilled or at room temperature."]},
+    {day:"Tuesday",type:"Dinner",name:"Pork tenderloin with mashed taro",time:"40 min",serves:"2",tags:["gf","df","p"],
+     ingredients:[{n:"Pork tenderloin",a:"8 oz"},{n:"Taro root",a:"2 cups, peeled and cubed"},{n:"Swiss chard",a:"2 cups"},{n:"Allspice",a:"½ tsp"},{n:"Parsley",a:"1 tbsp, chopped"},{n:"Canola oil",a:"1 tbsp"},{n:"Sea salt",a:"to taste"}],
+     steps:["Preheat oven to 425°F (220°C).","Rub pork tenderloin with allspice, parsley, salt, and a drizzle of canola oil. Place in a roasting pan.","Roast pork for 20–25 minutes until internal temperature reaches 145°F. Rest 5 minutes before slicing.","Meanwhile, boil taro root cubes in salted water for 15–18 minutes until very tender. Drain and mash with a fork, adding a splash of water or broth for creaminess. Season with salt.","Sauté Swiss chard in canola oil for 3–4 minutes until wilted. Season with salt. Serve pork over mashed taro with chard on the side."]},
+    {day:"Tuesday",type:"Snack",name:"Banana & walnut",time:"1 min",serves:"1",tags:["gf","df"],
+     ingredients:[{n:"Banana",a:"1"},{n:"Walnuts",a:"small handful (about 10)"}],
+     steps:["Peel banana and serve with walnuts. That's it."]},
+    {day:"Wednesday",type:"Breakfast",name:"Amaranth porridge with berries",time:"20 min",serves:"1",tags:["gf","df"],
+     ingredients:[{n:"Amaranth (dry)",a:"¼ cup"},{n:"Water",a:"¾ cup"},{n:"Raspberries",a:"½ cup"},{n:"Stevia leaf (optional)",a:"to taste"},{n:"Sea salt",a:"tiny pinch"}],
+     steps:["Combine amaranth, water, and a tiny pinch of salt in a small saucepan.","Bring to a boil, then reduce to a low simmer. Cover and cook 20 minutes, stirring occasionally, until thick and porridge-like.","Sweeten with stevia leaf if desired.","Top with fresh raspberries and serve warm. Note: cinnamon is a moderate food — skip or use sparingly."]},
+    {day:"Wednesday",type:"Lunch",name:"Duck & vegetable stir-fry",time:"25 min",serves:"1",tags:["gf","df","p"],
+     ingredients:[{n:"Duck breast",a:"4 oz, sliced thin"},{n:"Snap peas",a:"1 cup"},{n:"Collard greens",a:"1 cup, chopped"},{n:"Sorghum (cooked)",a:"¾ cup"},{n:"Sesame oil",a:"1 tsp"},{n:"Canola oil",a:"1 tsp"},{n:"Sea salt",a:"to taste"}],
+     steps:["Cook sorghum according to package instructions.","Season duck slices with sea salt. Heat canola oil in a wok or large pan over high heat. Add duck and stir-fry 3–4 minutes until cooked through. Remove and set aside.","Add snap peas to the same pan. Stir-fry 2 minutes.","Add collard greens and cook another 2 minutes until wilted.","Return duck to the pan. Drizzle with sesame oil, toss everything together. Serve over sorghum."]},
+    {day:"Wednesday",type:"Dinner",name:"Lobster & vegetable soup",time:"30 min",serves:"2",tags:["gf","df","p"],
+     ingredients:[{n:"Lobster tail",a:"6 oz, meat removed and chopped"},{n:"Sweet potato",a:"1 medium, diced"},{n:"Onion",a:"½, diced"},{n:"Parsnip",a:"1 small, diced"},{n:"Chicken or seafood broth",a:"3 cups"},{n:"Parsley",a:"2 tbsp, chopped"},{n:"Canola oil",a:"1 tsp"},{n:"Sea salt",a:"to taste"},{n:"Amaranth (cooked, side)",a:"½ cup"}],
+     steps:["Heat canola oil in a pot over medium heat. Add onion and parsnip and sauté 4–5 minutes until softened.","Add sweet potato and broth. Bring to a boil, then reduce to a simmer. Cook 15 minutes until sweet potato is tender.","Add lobster meat and cook 3–4 minutes just until opaque and cooked through.","Stir in parsley and season with salt. Serve hot with a side of cooked amaranth."]},
+    {day:"Wednesday",type:"Snack",name:"Guava & pecan",time:"2 min",serves:"1",tags:["gf","df"],
+     ingredients:[{n:"Fresh guava",a:"1, sliced"},{n:"Pecans",a:"small handful"}],
+     steps:["Slice guava and serve with pecans."]},
+    {day:"Thursday",type:"Breakfast",name:"Teff porridge with mango",time:"20 min",serves:"1",tags:["gf","df"],
+     ingredients:[{n:"Teff grain (dry)",a:"3 tbsp"},{n:"Water",a:"¾ cup"},{n:"Fresh mango",a:"½ cup, diced"},{n:"Stevia leaf (optional)",a:"to taste"},{n:"Sea salt",a:"pinch"}],
+     steps:["Combine teff, water, and pinch of salt in a small saucepan.","Bring to a boil over medium heat, then reduce to low. Simmer 15–20 minutes, stirring frequently, until thick and creamy.","Sweeten with stevia if desired.","Spoon into a bowl and top with diced fresh mango. Serve warm."]},
+    {day:"Thursday",type:"Lunch",name:"Tuna & jicama lettuce wraps",time:"10 min",serves:"1",tags:["gf","df","p"],
+     ingredients:[{n:"Tuna (canned in water, drained)",a:"4 oz"},{n:"Jicama",a:"½ cup, diced small"},{n:"Avocado",a:"½, diced"},{n:"Scallion",a:"1 stalk, sliced"},{n:"Lime juice",a:"1 tbsp"},{n:"Romaine lettuce leaves",a:"4 large"},{n:"Sea salt",a:"pinch"}],
+     steps:["In a bowl, combine tuna, jicama, avocado, and scallion.","Squeeze lime juice over the top and add a pinch of salt. Toss gently.","Spoon the mixture into large romaine lettuce leaves.","Fold the leaves around the filling like a wrap and serve immediately."]},
+    {day:"Thursday",type:"Dinner",name:"Venison with roasted beets & greens",time:"45 min",serves:"1",tags:["gf","df","p"],
+     ingredients:[{n:"Venison steak",a:"5 oz"},{n:"Red beet",a:"2 medium, peeled and cubed"},{n:"Turnip",a:"1 small, cubed"},{n:"Mustard greens",a:"1 cup"},{n:"Allspice",a:"½ tsp"},{n:"Rosemary",a:"1 tsp"},{n:"Canola oil",a:"1 tbsp"},{n:"Sea salt",a:"to taste"}],
+     steps:["Preheat oven to 400°F (200°C). Toss beet and turnip cubes with half the oil and a pinch of salt. Spread on a baking sheet and roast 30–35 minutes until tender and slightly caramelized.","Season venison steak with allspice, rosemary, and salt.","Heat remaining oil in a pan over high heat. Sear venison 3–4 minutes per side for medium (venison is best not overcooked). Rest 5 minutes before slicing.","Sauté mustard greens in the same pan 2–3 minutes with any remaining pan juices. Plate everything together."]},
+    {day:"Thursday",type:"Snack",name:"Pistachio & pomegranate",time:"2 min",serves:"1",tags:["gf","df"],
+     ingredients:[{n:"Pistachios (shelled)",a:"3 tbsp"},{n:"Pomegranate seeds",a:"¼ cup"}],
+     steps:["Combine pistachios and pomegranate seeds in a small bowl. Serve."]},
+    {day:"Friday",type:"Breakfast",name:"Salmon scramble with avocado",time:"10 min",serves:"1",tags:["gf","df","p"],
+     ingredients:[{n:"Eggs (whole)",a:"2"},{n:"Smoked or fresh salmon",a:"2 oz, flaked"},{n:"Avocado",a:"½, diced"},{n:"Chives",a:"1 tbsp, chopped"},{n:"Lemon juice",a:"1 tsp"},{n:"Canola oil",a:"1 tsp"},{n:"Sea salt",a:"pinch"}],
+     steps:["Heat canola oil in a pan over medium-low heat.","Crack eggs into the pan and begin to scramble gently.","When eggs are about halfway set, add flaked salmon. Continue folding gently until eggs are just cooked through.","Remove from heat. Top with diced avocado, chives, and a squeeze of lemon. Season with sea salt."]},
+    {day:"Friday",type:"Lunch",name:"Turkey & sweet potato lettuce cups",time:"20 min",serves:"1",tags:["gf","df","p"],
+     ingredients:[{n:"Ground turkey",a:"4 oz"},{n:"Sweet potato",a:"½ cup, finely diced"},{n:"Water chestnut (canned, drained)",a:"¼ cup, chopped"},{n:"Scallion",a:"1 stalk, sliced"},{n:"Sesame oil",a:"1 tsp"},{n:"Canola oil",a:"1 tsp"},{n:"Boston bibb lettuce leaves",a:"4 large"},{n:"Sea salt",a:"to taste"}],
+     steps:["Heat canola oil in a pan over medium heat. Add sweet potato and cook 5–6 minutes until tender.","Add ground turkey. Cook, breaking it up, until fully cooked through — about 5 minutes.","Add water chestnuts and scallion. Stir and cook 1 minute.","Remove from heat and drizzle with sesame oil. Season with salt.","Spoon filling into lettuce leaves and serve immediately."]},
+    {day:"Friday",type:"Dinner",name:"Mussel & tomato rice",time:"25 min",serves:"1–2",tags:["gf","df","p"],
+     ingredients:[{n:"Mussels (cleaned)",a:"12 oz"},{n:"Tomatoes",a:"2 medium, diced"},{n:"Onion",a:"½, diced"},{n:"Garlic (mild — optional)",a:"1 clove, minced"},{n:"Cayenne pepper",a:"¼ tsp"},{n:"Parsley",a:"2 tbsp, chopped"},{n:"Canola oil",a:"1 tsp"},{n:"Brown rice (cooked)",a:"1 cup"},{n:"Sea salt",a:"to taste"}],
+     steps:["Heat canola oil in a large pan over medium heat. Add onion (and garlic if using) and cook 3–4 minutes until softened.","Add diced tomato and cayenne. Cook 5 minutes until tomatoes break down into a sauce.","Add mussels to the pan. Cover with a lid and steam 4–5 minutes until all mussels have opened. Discard any that stay closed.","Stir in parsley and season with salt. Serve mussels and sauce over brown rice."]},
+    {day:"Friday",type:"Snack",name:"Watermelon & sunflower seeds",time:"2 min",serves:"1",tags:["gf","df"],
+     ingredients:[{n:"Watermelon",a:"1½ cups, cubed"},{n:"Sunflower seeds",a:"2 tbsp"}],
+     steps:["Cube watermelon and serve in a bowl topped with sunflower seeds."]},
+    {day:"Saturday",type:"Breakfast",name:"Sweet potato hash with eggs",time:"20 min",serves:"1",tags:["gf","df","p"],
+     ingredients:[{n:"Sweet potato",a:"1 medium, diced small"},{n:"Onion",a:"¼, diced"},{n:"Chives",a:"1 tbsp, chopped"},{n:"Paprika",a:"½ tsp"},{n:"Eggs",a:"2"},{n:"Canola oil",a:"1½ tsp"},{n:"Sea salt",a:"to taste"},{n:"Orange (side)",a:"1"}],
+     steps:["Heat 1 tsp canola oil in a pan over medium-high heat. Add sweet potato and onion.","Cook 10–12 minutes, stirring occasionally, until sweet potato is golden and tender. Season with paprika and salt.","Push hash to the sides of the pan. Add remaining ½ tsp oil to the center. Crack in the eggs and fry to your liking.","Top with fresh chives. Serve with sliced orange on the side."]},
+    {day:"Saturday",type:"Lunch",name:"Pollock fish tacos (lettuce wraps)",time:"20 min",serves:"1",tags:["gf","df","p"],
+     ingredients:[{n:"Pollock fillet",a:"5 oz"},{n:"Cabbage",a:"1 cup, shredded"},{n:"Tomato",a:"1, diced"},{n:"Onion",a:"¼, finely diced"},{n:"Avocado",a:"½, sliced"},{n:"Lime",a:"1"},{n:"Romaine lettuce leaves",a:"4 large"},{n:"Canola oil",a:"1 tsp"},{n:"Sea salt",a:"to taste"}],
+     steps:["Preheat oven to 400°F. Season pollock with salt and a squeeze of lime. Drizzle with canola oil.","Bake pollock 12–14 minutes until it flakes easily.","Make the pico de gallo: combine diced tomato, onion, and a squeeze of lime. Season with salt.","Flake the fish into chunks.","Assemble wraps: lay lettuce leaves flat, add fish, shredded cabbage, pico de gallo, and avocado slices. Squeeze extra lime on top."]},
+    {day:"Saturday",type:"Dinner",name:"Bison burger (lettuce bun) with fries",time:"30 min",serves:"1",tags:["gf","df","p"],
+     ingredients:[{n:"Ground bison",a:"5 oz"},{n:"Allspice",a:"¼ tsp"},{n:"Coriander seed (ground)",a:"¼ tsp"},{n:"White potato",a:"1 large"},{n:"Rosemary",a:"1 tsp"},{n:"Boston bibb lettuce leaves",a:"2 large"},{n:"Canola oil",a:"1 tbsp"},{n:"Sea salt",a:"to taste"}],
+     steps:["Preheat oven to 425°F. Cut potato into wedges. Toss with half the canola oil, rosemary, and salt. Spread on a baking sheet and roast 25–30 minutes, flipping halfway.","Mix ground bison with allspice, coriander, and a pinch of salt. Form into a patty.","Heat remaining oil in a pan over medium-high heat. Cook bison patty 3–4 minutes per side for medium. Bison is lean — don't overcook.","Serve patty in large lettuce leaves as the bun. Plate alongside potato wedge fries."]},
+    {day:"Saturday",type:"Snack",name:"Brazil nut & kiwi",time:"2 min",serves:"1",tags:["gf","df"],
+     ingredients:[{n:"Brazil nuts",a:"2–3"},{n:"Kiwi",a:"1, sliced"}],
+     steps:["Peel and slice kiwi. Serve with brazil nuts."]},
+    {day:"Sunday",type:"Breakfast",name:"Smoked salmon & egg white omelette",time:"12 min",serves:"1",tags:["gf","df","p"],
+     ingredients:[{n:"Egg whites",a:"3"},{n:"Smoked salmon",a:"2 oz"},{n:"Capers",a:"1 tsp"},{n:"Chives",a:"1 tbsp, chopped"},{n:"Canola oil",a:"1 tsp"},{n:"Strawberries (side)",a:"½ cup"}],
+     steps:["Whisk egg whites with a pinch of salt until slightly frothy.","Heat canola oil in a non-stick pan over medium-low heat. Pour in egg whites.","Cook without stirring until the edges set, about 2 minutes. Gently lift edges to let uncooked white flow underneath.","When almost fully set, lay smoked salmon, capers, and chives on one half. Fold the other half over.","Slide onto a plate and serve with fresh strawberries."]},
+    {day:"Sunday",type:"Lunch",name:"Shrimp & adzuki bean bowl",time:"20 min",serves:"1",tags:["gf","df","p"],
+     ingredients:[{n:"Shrimp (peeled)",a:"4 oz"},{n:"Adzuki beans (cooked or canned)",a:"½ cup"},{n:"Tomato",a:"1, diced"},{n:"Onion",a:"¼, diced"},{n:"Collard greens",a:"1 cup, chopped"},{n:"Coriander seed (ground)",a:"½ tsp"},{n:"Lime juice",a:"1 tbsp"},{n:"Canola oil",a:"1 tsp"},{n:"Sorghum (cooked)",a:"½ cup"},{n:"Sea salt",a:"to taste"}],
+     steps:["Heat canola oil in a pan over medium heat. Add onion and cook 3 minutes until soft.","Add tomato, coriander, and collard greens. Cook 3–4 minutes until greens wilt.","Add adzuki beans and stir to combine. Warm through 2 minutes.","In a separate pan, cook shrimp over high heat 1–2 minutes per side until pink. Season with salt.","Make dressing: stir lime juice into the bean mixture. Serve beans over sorghum, topped with shrimp."]},
+    {day:"Sunday",type:"Dinner",name:"Whole roasted duck with root vegetables",time:"90 min",serves:"2–3",tags:["gf","df","p"],
+     ingredients:[{n:"Duck legs or thighs",a:"2 pieces (~1 lb)"},{n:"Parsnip",a:"2, cut into chunks"},{n:"Turnip",a:"1, cut into chunks"},{n:"Sweet potato",a:"1 medium, cut into chunks"},{n:"Allspice",a:"½ tsp"},{n:"Clove (ground)",a:"¼ tsp"},{n:"Parsley",a:"2 tbsp, chopped"},{n:"Canola oil",a:"1 tbsp"},{n:"Sea salt",a:"to taste"}],
+     steps:["Preheat oven to 375°F (190°C).","Pat duck pieces dry with paper towels. Score the skin lightly with a knife. Season all over with allspice, clove, parsley, and salt.","Toss parsnip, turnip, and sweet potato with canola oil and salt. Spread in a roasting pan.","Place duck pieces skin-side up on top of the vegetables.","Roast for 75–90 minutes until duck skin is golden and crispy and internal temperature reaches 165°F. The fat from the duck will baste the vegetables as it cooks. Rest 10 minutes before serving."]},
+    {day:"Sunday",type:"Snack",name:"Peach & macadamia nuts",time:"2 min",serves:"1",tags:["gf","df"],
+     ingredients:[{n:"Fresh peach",a:"1, sliced"},{n:"Macadamia nuts",a:"small handful"}],
+     steps:["Slice peach and serve alongside macadamia nuts."]}
+  ];
+
+  let activeFilter='all';
+
+  function renderRecipes(){
+    const grid=document.getElementById('recipe-grid');
+    const filtered=activeFilter==='all'?recipes:recipes.filter(r=>r.type===activeFilter);
+    grid.innerHTML=filtered.map((r,i)=>{
+      const tagHTML=r.tags.map(t=>t==='gf'?'<span class="rtag rtag-gf">Gluten-free</span>':t==='df'?'<span class="rtag rtag-df">Dairy-free</span>':'<span class="rtag rtag-p">High protein</span>').join('');
+      return `<div class="recipe-card" id="rc-${i}">
+        <div class="recipe-card-head" onclick="toggleRecipe('rc-${i}')">
+          <div class="recipe-meal-type">${r.day} &middot; ${r.type}</div>
+          <div class="recipe-name">${r.name}</div>
+          <div class="recipe-meta">
+            <span class="recipe-meta-item">⏱ ${r.time}</span>
+            <span class="recipe-meta-item">Serves ${r.serves}</span>
+          </div>
+          <div class="recipe-tags">${tagHTML}</div>
+          <div class="recipe-toggle-hint">Tap to see recipe</div>
+        </div>
+        <div class="recipe-card-body" id="rb-${i}">
+          <div class="recipe-section-label">Ingredients</div>
+          <ul class="recipe-ingredients">${r.ingredients.map(ing=>`<li><span class="ing-name">${ing.n}</span><span class="ing-amount">${ing.a}</span></li>`).join('')}</ul>
+          <div class="recipe-section-label">Steps</div>
+          <ol class="recipe-steps">${r.steps.map(s=>`<li>${s}</li>`).join('')}</ol>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  window.toggleRecipe=function(id){
+    const bodyId=id.replace('rc-','rb-');
+    const b=document.getElementById(bodyId);
+    const hint=document.querySelector('#'+id+' .recipe-toggle-hint');
+    if(b.classList.contains('open')){b.classList.remove('open');hint.textContent='Tap to see recipe';}
+    else{b.classList.add('open');hint.textContent='Tap to close';}
+  };
+
+  document.querySelectorAll('.recipe-filter-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      activeFilter=btn.dataset.rf;
+      document.querySelectorAll('.recipe-filter-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      renderRecipes();
+    });
+  });
+
+  renderRecipes();
+})();
+
+
 const _s=document.querySelectorAll('section[id]'),_n=document.querySelectorAll('.nav-btn');
 window.addEventListener('scroll',()=>{let c='';_s.forEach(s=>{if(window.scrollY>=s.offsetTop-140)c=s.id;});_n.forEach(b=>b.classList.toggle('active',b.getAttribute('href')==='#'+c));},{passive:true});
 </script>
