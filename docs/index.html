@@ -424,7 +424,7 @@ const rotDays=[
   renderRot();
 })();
 
-/* ===== NAV SCROLL ===== */
+/* ===== NAV SCROLL ==== */
 const _s=document.querySelectorAll('section[id]'),_n=document.querySelectorAll('.nav-btn');
 window.addEventListener('scroll',()=>{let c='';_s.forEach(s=>{if(window.scrollY>=s.offsetTop-140)c=s.id;});_n.forEach(b=>b.classList.toggle('active',b.getAttribute('href')==='#'+c));},{passive:true});
 </script>
