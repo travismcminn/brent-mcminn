@@ -440,19 +440,6 @@ const rotDays=[
   renderRC();
 })();
 
-/* ===== ROTATION TRACKER ===== */
-(function(){
-  let startDate=new Date();startDate.setHours(0,0,0,0);let viewMode='all';
-  const fmt=d=>d.toISOString().split('T')[0];
-  const getDay=date=>((Math.floor((date-startDate)/86400000)%4)+4)%4;
-  const inp=document.getElementById('rot-start');inp.value=fmt(startDate);
-  inp.addEventListener('change',e=>{const p=e.target.value.split('-');startDate=new Date(+p[0],+p[1]-1,+p[2]);renderRot();});
-  document.getElementById('rot-all-btn').addEventListener('click',()=>{viewMode='all';document.getElementById('rot-all-btn').classList.add('active');document.getElementById('rot-today-btn').classList.remove('active');renderRot();});
-  document.getElementById('rot-today-btn').addEventListener('click',()=>{viewMode='today';document.getElementById('rot-today-btn').classList.add('active');document.getElementById('rot-all-btn').classList.remove('active');renderRot();});
-  function renderRot(){const today=new Date();today.setHours(0,0,0,0);const todayIdx=getDay(today);document.getElementById('rot-cycle-label').textContent=`Today is Day ${todayIdx+1}`;const toShow=viewMode==='today'?[todayIdx]:[0,1,2,3];let html=`<div class="rot-grid" style="grid-template-columns:repeat(${toShow.length},minmax(0,1fr))">`;toShow.forEach(i=>{const d=rotDays[i];const isT=i===todayIdx;html+=`<div class="rot-col${isT?' today-col':''}"><div class="rot-head"><div class="rh-day">${d.label}</div>${isT?'<div class="today-tag">today</div>':''}</div>`;for(const [sec,items] of Object.entries(d.secs))html+=`<div class="rot-sec"><div class="rot-sec-label">${sec}</div><div class="pills">${items.map(it=>`<span class="pill ${it.r==='mi'?'mi':'ok'}">${it.n}</span>`).join('')}</div></div>`;html+=`</div>`;});document.getElementById('rot-chart').innerHTML=html+'</div>';}
-  renderRot();
-})();
-
 /* ===== RECIPES ===== */
 (function(){
   const recipes=[
